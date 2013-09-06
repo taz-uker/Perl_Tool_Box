@@ -1,0 +1,361 @@
+#!/usr/local/bin/expect --
+
+####################################################################
+###                                                              ###
+### First wait for a "sftp> " prompt.  Then, when the prompt     ###
+### appears again, send the command.                             ###
+###                                                              ###
+###                                                              ###
+####################################################################
+proc issue_ftp_command { command_string time_out_value} \
+     {
+     global FTP_COMMAND_PROMPT
+
+     set timeout 120
+     send "\r"
+     expect {
+               "$FTP_COMMAND_PROMPT"  { }
+
+               timeout    { \
+                            puts "Time out at $timeout seconds waiting for prompt string \"$FTP_COMMAND_PROMPT\"."
+                            puts "Aborting..."
+                            puts "---  [exec date]  ---"
+                            exit 3
+                          }
+            }
+
+     set timeout $time_out_value
+
+     send "$command_string\r" 
+
+     expect {
+               "$FTP_COMMAND_PROMPT" { }
+
+               timeout    { \
+                            puts "Time out at $timeout seconds waiting for command \"$command_string\" to complete."
+                            puts "Aborting..."
+                            puts "---  [exec date]  ---"
+                            exit 3
+                          }
+
+               eof        { \
+                          }
+            }
+
+     }
+     
+
+####################################################################
+###                                                              ###
+### Get the file names and byte sizes of all the remote files.   ###
+###                                                              ###
+###                                                              ###
+####################################################################
+proc get_remote_file_names_and_sizes {} \
+     {
+     global FTP_COMMAND_PROMPT
+     global file_name_regular_expression
+     global file_info
+
+     puts "Directory listing of remote system:"
+     send "ls -l\r"
+
+     ###
+     ### Get the byte size for each file from the remote site.
+     ###
+     while { 1 } \
+           {
+           ###
+           ### Grab each and every line of the "ls -l" output
+           ###
+           ### Also, capture the ending "sftp> " prompt.
+           ###
+           expect -re "(\[^\r]*\r\n|$FTP_COMMAND_PROMPT)" \
+                  {
+                  ###
+                  ### If "sftp> " must be done with "ls" data.
+                  ###
+                  if { [string match "$FTP_COMMAND_PROMPT" $expect_out(1,string)] == 1 } \
+                     {
+                     break
+                     }
+
+                  ###
+                  ### Get the file name and the byte size of the file
+                  ### from the remote system.
+                  ###
+                  set file_name [lindex $expect_out(1,string) 8]
+                  set file_size [lindex $expect_out(1,string) 4]
+
+                  ###
+                  ### Is the file name a non-zero length string?
+                  ### Is the file name of the pattern "$file_name_regular_expression"?
+                  ### Is the file size parameter a non-zero length string?
+                  ###
+                  ### If so, save the file size using the file name as a key.
+                  ###
+                  if {     [string length $file_name]
+                        && [string length $file_size]
+                     } \
+                     {
+                     #####
+                     ##### Test the file name against the global regular expression
+                     ##### defined globally to see if it's a possible download.
+                     #####
+                     set possible_file_name_match ""
+                     regexp "$file_name_regular_expression" "$file_name" possible_file_name_match
+                     if { [string length $possible_file_name_match] } \
+                        {
+                        set file_info($file_name) $file_size
+                        }
+
+                     }
+                  }
+           }
+
+     }
+####  End of procedure get_remote_file_names_and_sizes()
+
+
+####################################################################
+###                                                              ###
+### Perform the login to the remote host.                        ###
+###                                                              ###
+####################################################################
+proc log_into_remote_host { host pword password_prompt_string } \
+     {
+     ####spawn sftp -o "StrictHostKeyChecking no" $host
+     spawn sftp $host
+
+     ###
+     ### If a first time sftp connection by the user RSA keys need to
+     ### be created.  sftp will issue a continue (yes/no)? string.
+     ### "yes" must be typed out in full.
+     ###
+     ### If there is no prompt, the "expect" line will just timeout
+     ### and continue.
+     set timeout 10
+     expect {
+               "(yes/no)?" { send "yes\r" }
+            }
+
+     set timeout 120
+     expect { 
+              "$password_prompt_string" { send "$pword\r" }
+
+               timeout    { \
+                          puts "Time out waiting for password prompt string \"$password_prompt_string\"."
+                          puts "Aborting..."
+                          puts "---  [exec date]  ---"
+                          exit 3
+                          }
+
+            }
+
+     return $spawn_id
+     }
+
+
+####################################################################
+###                                                              ###
+### Compare the file name/size arrays between the previous login ###
+### and the last login.                                          ###
+####################################################################
+proc check_current_previous_logins {} \
+     {
+
+     global file_info
+     global previous_file_info
+
+     ##  If either check is of a different element count from the
+     ##  other.
+     if { [array size file_info] != [array size previous_file_info] } \
+        {
+        puts "CHECKING FILE NAME/SIZE LISTS -- Lists are of different sizes."
+        return 0
+        }
+
+     ##  Check the elements of array "ONE" to see if they exist in "TWO".
+     foreach file_name [array names file_info] \
+             {
+             if { [string length [array names previous_file_info $file_name]] == 0 } \
+                {
+                puts "CHECKING FILE NAME/SIZE LISTS -- Key in list ONE not found in list TWO."
+                return 0;
+                }
+             }
+
+     ##  Check the elements of array "TWO" to see if they exist in "ONE".
+     foreach file_name [array names previous_file_info] \
+             {
+             if { [string length [array names file_info $file_name]] == 0 } \
+                {
+                puts "CHECKING FILE NAME/SIZE LISTS -- Key in list TWO not found in list ONE."
+                return 0;
+                }
+             }
+
+     ##  Arrays have the same keys.  Now, see if their values are the same.
+     foreach file_name [array names file_info] \
+             {
+             if { $file_info($file_name) != $previous_file_info($file_name) } \
+                {
+                puts "CHECKING FILE NAME/SIZE LISTS -- File sizes different."
+                return 0;
+                }
+             }
+
+
+     ##  The arrays should be the same in keys and values.
+     return 1
+     }
+
+
+########
+########
+######## Start of main().
+########
+########
+set FTP_COMMAND_PROMPT "sftp> "
+
+set password_prompt_string "password: "
+set pword "*******"
+set host "userid@ftp.ecsi.net"
+set remote_directory "OUTGOINGPROM"
+
+set sleep_duration_total 0
+set sleep_duration 20
+set sleep_duration_max 120
+
+##set file_name_regular_expression  "DQHOLD-\[0-9\]\[0-9\]-20\[0-9\]\[0-9\]\[0-1\]\[0-9\]\[0-3\]\[0-9\]\.TXT"
+### on the command line $ ecsi.exp get DQHOLD-\[0-9\]\[0-9\]-20\[0-9\]\[0-9\]\[0-1\]\[0-9\]\[0-3\]\[0-9\]\.TXT
+
+set transfer_type [lindex $argv 0]
+set file_name_regular_expression [lindex $argv 1]
+
+puts "Starting connection for ECSI data file transfers."
+puts "---  [exec date]  ---"
+puts "Searching for file matching the regular expression:"
+puts "$file_name_regular_expression"
+
+###  Initialize previous file name and size information to 
+###  bogus values so first array compare will fail.  We want
+###  at least two logins to make sure the remote files are
+###  stable.
+set previous_file_info("") -9
+
+
+###
+### Keep looping through logins between pauses (sleeps) and checking to
+### see if the remote files have stablized.
+###
+while { 1 } \
+      {
+      set spawn_id [ log_into_remote_host  "$host" "$pword" "$password_prompt_string" ]
+
+      issue_ftp_command "cd $remote_directory" 120
+
+      get_remote_file_names_and_sizes
+
+      ###
+      ### Check the previous file name/size array against this last check.
+      ### If they're the same, continue to the file transfer logic.
+      ###
+      if { [ check_current_previous_logins ] } \
+         {
+         break
+         } \
+      else \
+         {
+         issue_ftp_command "quit" 120
+
+         ### Clear the "previous" array and copy in the contents
+         ### of file_info
+         unset previous_file_info
+         array set previous_file_info [array get file_info]
+         }
+
+      ###
+      ### Pause and wait for another check of the remote site's files.
+      ### Error if we've looped a number of times and it's taking too long.
+      ###
+      puts "Waiting $sleep_duration seconds before attempting another login."
+      sleep $sleep_duration
+      set sleep_duration_total [expr $sleep_duration + $sleep_duration_total] 
+      if { $sleep_duration_total >= $sleep_duration_max } \
+         {
+         puts "Time out value reached in repeated checking of remote site for stable files."
+         exit 3
+         }
+      }
+
+###
+### Arrays both of zero length.  No files to process.
+###
+if { [array size file_info] == 0 && [array size previous_file_info] == 0 } \
+   {
+   issue_ftp_command "quit" 120
+   puts "No file names found on the remote system matching the necessary template."
+   puts "Nothing downloaded."
+   exit 0
+   }
+
+ 
+###
+### Turn off the progress percent complete messages during file.
+### transfers.
+###
+issue_ftp_command "progress" 120
+
+###
+### Retrieve each file
+###
+foreach file_name [array names file_info] \
+        {
+        puts "Attempting to retrieve file \"$file_name\"."
+        issue_ftp_command "$transfer_type $file_name" 900
+        }
+
+###
+### Check the byte size of the local files with the values
+### obtained from the last remote system check.
+###
+foreach file_name [array names file_info] \
+        {
+        puts "Comparing remote and local byte sizes of file \"$file_name\"."
+        if { [file size $file_name] != $file_info($file_name) } \
+           {
+           puts "Byte size difference detected with \"$file_name\" between remote and local versions."
+           puts "File tranfer considered a failure.  Aborting."
+           puts "---  [exec date]  ---"
+           exit 3
+           }
+        }
+
+
+###
+### Delete all transfered files from remote host .
+###
+foreach file_name [array names file_info] \
+        {
+        puts "Attempting to delete \"$file_name\" from remote system."
+        issue_ftp_command "rm $file_name" 120
+        }
+
+###
+### For logging information list the remote system directory
+###
+puts "Listing of remote system directory prior to log off:"
+issue_ftp_command "ls -l" 120
+
+
+###
+### Disconnect from remote system
+###
+issue_ftp_command "quit" 120
+
+
+puts "Completed successfully."
+puts "---  [exec date]  ---"
+
+

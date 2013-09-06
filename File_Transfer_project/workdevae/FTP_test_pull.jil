@@ -1,0 +1,19 @@
+
+/* ----------------- FTP_test_pull ----------------- */
+
+insert_job: FTP_test_pull   job_type: SCP
+machine: workdevae.it.ohio-state.edu
+owner: autosys
+permission: gx
+date_conditions: 0
+alarm_if_fail: 1
+scp_transfer_direction: DOWNLOAD
+scp_server_name: hcsqltst02.it.ohio-state.edu
+scp_server_port: 22
+scp_remote_dir: "/tmp/"
+scp_remote_name: "tmp.txt"
+scp_local_name: "/tmp/test.tmp.txt"
+scp_target_os: UNIX
+scp_protocol: SCP
+scp_local_user: autosys@hcsqltst01.it.ohio-state.edu
+

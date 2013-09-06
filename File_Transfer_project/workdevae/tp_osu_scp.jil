@@ -1,0 +1,21 @@
+
+
+/* ----------------- tp_osu_scp_test_pull ----------------- */ 
+
+update_job: tp_osu_scp_test_pull   job_type: SCP 
+machine: hcsqltst01.it.ohio-state.edu
+owner: tpensel@hcsqltst01.it.ohio-state.edu
+permission: gx
+date_conditions: 0
+alarm_if_fail: 1
+scp_transfer_direction: DOWNLOAD
+scp_server_name: hcsqltst02.it.ohio-state.edu
+scp_server_port: 22
+scp_remote_dir: "/home/tpensel/"
+scp_remote_name: "terryp.txt"
+scp_local_name: "/home/tpensel/terry_test.txt"
+std_out_file: /tmp/tpensel.scp.test
+std_err_file: /tmp/tpensel.scp.test.error
+scp_target_os: UNIX
+scp_protocol: SCP
+scp_local_user: tpensel@hcsqltst01.it.ohio-state.edu

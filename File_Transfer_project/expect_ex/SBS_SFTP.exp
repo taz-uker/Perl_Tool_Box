@@ -1,0 +1,99 @@
+#!/usr/local/bin/expect --
+#####
+##### Script Name: SBS_SFTP.exp
+#####
+##### Author:  Scott Norfolk.   email:  norfolk.2@osu.edu
+#####
+##### Date:  07/22/2009
+#####
+#####
+##### Modifications:
+#####
+#####
+#####
+##### Subroutine definitions.
+#####
+####################################################################
+###                                                              ###
+### First wait for a "sftp> " prompt.  Then, when the prompt     ###
+### appears again, send the command.                             ###
+###                                                              ###
+###                                                              ###
+####################################################################
+proc issue_ftp_command { command_string time_out_value} \
+     {
+     set timeout 60
+     set PROMPT "sftp> "
+     send "\r"
+     expect {
+               "$PROMPT"  { }
+
+               timeout    { \
+                            puts "Time out at $timeout seconds waiting for prompt string \"$PROMPT\"."
+                            puts "Aborting..."
+                            puts "---  [exec date]  ---"
+                            exit 3
+                          }
+            }
+
+     set timeout $time_out_value
+
+     send "$command_string\r" 
+
+     expect {
+               "$PROMPT" { }
+
+               timeout    { \
+                            puts "Time out at $timeout seconds waiting for command \"$command_string\" to complete."
+                            puts "Aborting..."
+                            puts "---  [exec date]  ---"
+                            exit 3
+                          }
+
+               eof        { \
+                          }
+            }
+
+     }
+     
+
+########
+########
+######## Start of main().
+########
+########
+set pword "*********"
+set host "userid@sftp.cse.ohio-state.edu"
+set argc [llength $argv]
+
+puts "Starting connection for Student Life file transfers."
+puts "---  [exec date]  ---"
+
+spawn sftp $host
+###
+### If a first time sftp connection by the user RSA keys need to be
+### created.  sftp will issue a continue (yes/no)? string.
+### "yes" must be typed out in full.
+### 
+### If there is a no prompt, the "expect" line will just timeout
+### and continue.
+
+set timeout 3
+expect "(yes/no)?" {send "yes\r"}
+
+###set timeout 20
+set timeout 60
+expect "password:"
+send "$pword\r"
+
+for {set i 0} {$i<$argc} {incr i} {
+	set filename [lindex $argv $i]
+	issue_ftp_command "put $filename" 500
+	issue_ftp_command "ls -l $filename"	10
+}
+
+issue_ftp_command "quit" 10
+
+puts "File transfers completed successfully."
+puts "---  [exec date]  ---"
+

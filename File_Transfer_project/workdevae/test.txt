@@ -1,0 +1,11 @@
+total 36
+drwx------   2 tpensel users 4096 Apr 22 14:54 .
+drwxr-xr-x. 23 root    root  4096 Apr  4 14:17 ..
+-rw-------   1 tpensel users  206 Apr 18 17:52 .bash_history
+-rw-r--r--   1 tpensel users   18 Apr 23  2012 .bash_logout
+-rw-r--r--   1 tpensel users  244 Apr 16 15:43 .bash_profile
+-rw-r--r--   1 tpensel users  176 Apr 16 15:42 .bash_profile_041613
+-rw-r--r--   1 tpensel users  124 Apr 23  2012 .bashrc
+-rw-r--r--   1 tpensel users  121 Nov  1 13:05 .kshrc
+-rw-r--r--   1 tpensel users  124 Jun 28  2011 .mkshrc
+-rw-r--r--   1 tpensel users    0 Apr 22 14:54 test.txt

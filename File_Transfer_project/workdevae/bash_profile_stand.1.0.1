@@ -1,0 +1,104 @@
+# @(#)B11.23_LR
+
+# Set up the terminal:
+        if [ "$TERM" = "" ];
+        then
+                eval ` tset -s -Q -m ':?hp' `
+        else
+                eval ` tset -s -Q `
+        fi
+        stty erase "^H" kill "^U" intr "^C" eof "^D"
+        stty hupcl ixon ixoff
+	    stty columns 132
+
+# Set up the shell environment:
+        set +u 
+        trap "echo 'logout'" 0
+        EDITOR=vi
+        set history=500
+
+# Set up the search paths for Autosys machines:
+
+if [ -d /app/CA/WorkloadAutomationAE ]; then
+   
+    . /app/CA/WorkloadAutomationAE/autouser.DEV/autosys.bash.workdevae
+
+        alias adm='autorep -j BGCSnightlybatchADM -l1'
+        alias arepd='autorep -d -J '
+        alias atrc='autotrack -v -tC |less'
+        alias atrj='autotrack -v -tJ -J'
+        alias fadm='autorep -j BSHCfadmrepl -l1'
+        alias fsj='sendevent -E FORCE_STARTJOB -J'
+        alias hrsis='autorep -j BGHCnightlybatchAPP -l1'
+        alias nfsmnt="cd /usr/local/batch/nfs/"
+        alias rpt='autorep -j BSHCrptrepl -l1'
+        alias seh='sendevent -E JOB_ON_HOLD -J'
+        alias sei='sendevent -E JOB_ON_ICE -J'
+        alias sein='sendevent -E CHANGE_STATUS -s INACTIVE -J'
+        alias sekill='sendevent -E KILLJOB -J'
+        alias senh='sendevent -E JOB_OFF_HOLD -J'
+        alias seni='sendevent -E JOB_OFF_ICE -J'
+        alias ses='sendevent -E CHANGE_STATUS -s SUCCESS -J'
+        alias sf='autorep -j BGCSnightlybatchSF -l1'
+        alias sfa='autorep -j BGCSnightlybatchSFA -l1'
+        alias sj='sendevent -E STARTJOB -J'
+        alias stop='kill -STOP'
+        alias h='history'
+        alias jb='autorep -B'
+        alias jg='autorep -G'
+        alias ji='autorep -I'
+        alias jm='autorep -M'
+        alias jv='autorep -V'
+        alias sfor='sendevent -E FORCE_STARTJOB -J'
+        alias ss='sendevent -E CHANGE_STATUS -s SUCCESS -J'
+        alias si='sendevent -E CHANGE_STATUS -s INACTIVE -J'
+        alias se='sendevent -E'
+        alias fsj='sendevent -E FORCE_STARTJOB -J'
+        alias jr='autorep -J'
+        alias mr='autorep -M'
+
+
+
+ fi 
+
+
+# setup for scripts,  production scripts, perl lib paths
+
+if [ -f /usr/local/batch/nfs/profiles/auto.dev.profile ]; then
+      . /usr/local/batch/nfs/profiles/auto.dev.profile
+fi       
+
+
+# setup prompt
+
+HOST=`hostname`
+PS1='${AUTOSERV} ${HOST}:${PWD}>'
+
+# setup aliases for PSOFT 
+
+if [ -f /psoft/scripts/set_pshome.sh ]; then
+
+        alias access='cd $PS_CUST_ACCESS'
+        alias brio='cd $PS_CUST_BRIO'
+        alias csbank='cd $PS_CUST_FTP/csbank'
+        alias csecsi='cd $PS_CUST_FTP/csecsi'
+        alias cslib='cd $PS_CUST_FTP/cslib'
+        alias csosa='cd $PS_CUST_FTP/csosa'
+        alias csshlth='cd $PS_CUST_FTP/csshlth'
+        alias dat='cd $PS_CUST_DAT'
+        alias data='cd $PS_CUST_ARCH_DATA'
+        alias envshow='echo $ORACLE_SID'
+        alias fftp='cd $PS_CUST_FTP'
+        alias fsftp='cd $PS_CUST_FTP'
+        alias hrbars='cd $PS_CUST_FTP/hrbars'
+        alias hrtp='cd $PS_CUST_FTP/hrtp'
+        alias hrunits='cd $PS_CUST_FTP/hrunits'
+        alias iin='cd $PS_CUST_INT_IN'
+        alias log='cd $PS_CUST_ARCH_LOG'
+        alias out='cd $PS_CUST_INT_OUT'
+        alias parm='cd $PS_CUST_PARM'
+        alias pgm='cd $PS_CUST_SQR'
+        alias scr='cd $PS_CUST_SCRIPT'
+        alias web='cd $PS_CUST_WEBSERV'
+
+fi

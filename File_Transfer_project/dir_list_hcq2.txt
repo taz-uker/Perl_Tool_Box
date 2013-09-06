@@ -1,0 +1,10 @@
+                                                               total   1
+                                    dir_list_hcq2.txt 16:25   1   Sep   -rw-r--r--   2
+                                    tpensel@stsqltst01 16:09   1   Sep   -rw-r--r--   3
+                                    get_siteid.pl 18:46  31   Aug   -rw-r--r--   4
+                                    getopt_long.pl 10:26  29   Aug   -rwxr-xr--   5
+                                    getSiteIDrec.pl 12:15  28   Aug   -rw-r--r--   6
+                                    net_sftp_foreign_mget.pl 13:13  22   Aug   -r-xr-xr--   7
+                                    net_sftp_foreign_mput.pl 11:29  22   Aug   -r-xr-xr--   8
+                                    net_sftp_foreign_push.pl 17:24  20   Aug   -r-xr-xr--   9
+                                    net_sftp_foreign.pl 14:58  20   Aug   -r-xr-xr--  10

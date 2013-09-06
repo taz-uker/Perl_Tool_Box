@@ -1,0 +1,1 @@
+ls -ahlt | perl -ne 'print("$. ",$_)'| perl -lane 'printf("%25s %3s %3s %5s %12s %-3s %3s\n", $F[9],$F[8],$F[7],$F[6],$F[5],$F[1],$F[0])' | head 
