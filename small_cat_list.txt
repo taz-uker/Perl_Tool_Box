@@ -1,0 +1,5 @@
+catalog.txt
+list_of_lines.txt
+reverse_strings.pl
+small_cat_list.txt
+tac_tp.pl
